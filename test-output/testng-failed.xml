@@ -6,8 +6,7 @@
       <class name="SmartBuyAutomation.TestCases">
         <methods>
           <include name="mySetup"/>
-          <include name="ProductSearchFunctionality"/>
-          <include name="ProductCategoryNavigation"/>
+          <include name="productDetailAccuracy"/>
           <include name="tearDown"/>
         </methods>
       </class> <!-- SmartBuyAutomation.TestCases -->
