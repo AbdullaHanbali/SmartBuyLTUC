@@ -23,6 +23,15 @@ public class TestCases {
 	String TheURL = "https://smartbuy-me.com/";
 
 	Random rand = new Random();
+	
+	String[] firstNames = {"Yazan", "Ali", "Hasan", "Mais", "Dareen"};
+    String[] lastNames = {"Alaa", "Saif", "Abdullah", "Hamzeh", "Marwan", "Abedalrahman", "Omar", "Yazan"};
+    String[] passwords = {"alaa@45", "saif1998", "abduallah09", "hamzeh66", "marwan666", "abedalrahman6544", "omar123", "yazan98"};
+    String firstName = firstNames[rand.nextInt(firstNames.length)];
+    String lastName = lastNames[rand.nextInt(lastNames.length)];
+    String email = firstName.toLowerCase() + lastName.toLowerCase() + rand.nextInt(7000) + "@gmail.com";
+    String password = passwords[rand.nextInt(passwords.length)];
+
 
 	@BeforeTest
 	public void mySetup() {
@@ -30,6 +39,7 @@ public class TestCases {
 		driver.get(TheURL);
 		
 		driver.manage().window().maximize();
+		
 	}
 
 	@Test(priority = 1, enabled = false)
@@ -134,27 +144,73 @@ public class TestCases {
 		
 	}
 	
-	@Test(priority = 5, enabled = false)
-	public void removeFromCart() throws InterruptedException {
-		
+	@Test(priority = 5, enabled = true)
+    public void addRandomProductToCart() throws InterruptedException {
+        driver.get("https://smartbuy-me.com/");
+
+        String[] sections = {"Featured Products", "Promotions", "New Arrivals", "Trending Now"};
+        String selectedSection = sections[rand.nextInt(sections.length)];
+        System.out.println("Selected section: " + selectedSection);
+
+        WebElement section = driver.findElement(By.xpath(
+            "//h2[contains(@class,'section__title') and contains(text(),'" + selectedSection + "')]/ancestor::section"
+        ));
+
+        List<WebElement> items = section.findElements(
+            By.xpath(".//a[contains(@class,'product-item__image-wrapper')]")
+        );
+
+        if (items.size() == 0) {
+            System.out.println("No products found in this section.");
+            return;
+        }
+
+        WebElement randomItem = items.get(rand.nextInt(items.size()));
+        ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", randomItem);
+        randomItem.click();
         Thread.sleep(2000);
-		
-        driver.findElement(By.xpath("//*[@id=\"vitals_popup\"]/div/div/div[2]/div/div/div/div/div/button[2]")).click();
+
+        WebElement addToCartBtn = driver.findElement(
+            By.xpath("//button[contains(@class,'product-form__add-button')]")
+        );
+
+        if (addToCartBtn.getText().trim().equalsIgnoreCase("Sold out")) {
+            System.out.println("Product is Sold Out.");
+            return;
+        }
+
+        ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", addToCartBtn);
+        addToCartBtn.click();
+        Thread.sleep(1500);
+
+        driver.findElement(By.xpath("//*[name()='svg' and contains(@class,'fa-times')]")).click();
+        System.out.println("Product added to cart and popup closed successfully.");
         
-		Thread.sleep(2000);
-		
-		WebElement removeButon = driver.findElement(By.xpath("//*[@id=\"mini-cart\"]/div/div[1]/div/div/div[2]/div[2]/a"));
-		removeButon.click();
-		Thread.sleep(2000);
-		
-		WebElement emptyCartMsg = driver.findElement(By.xpath("//*[@id=\"mini-cart\"]/div/div"));
-		Assert.assertTrue(emptyCartMsg.isDisplayed(), "Cart is not empty after removing items.");
-		
-		driver.findElement(By.xpath("//*[@id=\"shopify-section-sections--23554635530550__header\"]/section/header/div/div/div[2]/div[4]/a")).click();
-		Thread.sleep(2000);
+        Thread.sleep(2000);
+        
+        driver.get("https://smartbuy-me.com/");
+        Thread.sleep(2000);
+    }
+	
+	@Test(priority = 6, enabled = true)
+	public void removeFromCart() {
+	    WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+
+	    WebElement cartIcon = wait.until(ExpectedConditions.elementToBeClickable(
+	        By.cssSelector("a[href='/cart']")  
+	    ));
+	    cartIcon.click();
+
+	    WebElement removeButton = wait.until(ExpectedConditions.elementToBeClickable(
+	       By.xpath("//*[@id='mini-cart']//a[contains(@class,'mini-cart__quantity-remove')]")));
+	    removeButton.click();
+
+	    
+	    wait.until(ExpectedConditions.invisibilityOfElementLocated(
+	    	    By.cssSelector("#mini-cart .mini-cart__item")));
 	}
 	
-	@Test(priority = 6, enabled = false)
+	@Test(priority = 7, enabled = false)
 	public void productDetailAccuracy() throws InterruptedException {
 		
         Thread.sleep(2000);
@@ -180,6 +236,51 @@ public class TestCases {
         WebElement availability = driver.findElement(By.cssSelector("input.quantity-selector__value"));
         Assert.assertTrue(availability.isDisplayed(), "Availability info is missing!");
 		 
+	}
+	
+	@Test(priority = 8, enabled = false)
+	public void testSignup() throws InterruptedException {
+	    
+	    driver.get("https://smartbuy-me.com/ar/account/register");
+	    Thread.sleep(5000);
+
+	    JavascriptExecutor js = (JavascriptExecutor) driver;
+	    js.executeScript("window.scrollTo(0,150)");
+	    Thread.sleep(2000);
+
+	    System.out.println(" Signup email: " + email);
+	    System.out.println(" Password: " + password);
+
+	    driver.findElement(By.id("customer[first_name]")).sendKeys(firstName);
+	    driver.findElement(By.id("customer[last_name]")).sendKeys(lastName);
+	    driver.findElement(By.id("customer[email]")).sendKeys(email);
+	    driver.findElement(By.id("customer[password]")).sendKeys(password);
+
+	    driver.findElement(By.xpath("//button[@class='form__submit button button--primary button--full']")).click();
+
+	    driver.manage().addCookie(new org.openqa.selenium.Cookie("signup_email", email));
+	    driver.manage().addCookie(new org.openqa.selenium.Cookie("signup_password", password));
+	}
+	
+	@Test(priority = 9, enabled = false)
+	public void LoginPage() throws InterruptedException {
+	    Thread.sleep(2000);
+	    driver.get("https://smartbuy-me.com/ar/account/login");
+
+	    JavascriptExecutor js = (JavascriptExecutor) driver;
+	    js.executeScript("window.scrollTo(0,200)");
+	    Thread.sleep(2000);
+
+	    if (email != null && password != null) {
+	        driver.findElement(By.id("customer[email]")).sendKeys(email);
+	        driver.findElement(By.id("customer[password]")).sendKeys(password);
+	        Thread.sleep(2000);
+	        driver.findElement(By.className("Vtl-Button__Content")).click();
+	        Thread.sleep(1000);
+	        driver.findElement(By.cssSelector(".form__submit.button.button--primary.button--full")).click();
+	    } else {
+	        System.err.println("❌ Email or password is null. Make sure testSignup() ran first.");
+	    }
 	}
 
 	@AfterTest
