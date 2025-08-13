@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Random;
 import org.openqa.selenium.By;
+import org.openqa.selenium.Dimension;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -13,6 +14,7 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -31,6 +33,7 @@ public class TestCases {
     String lastName = lastNames[rand.nextInt(lastNames.length)];
     String email = firstName.toLowerCase() + lastName.toLowerCase() + rand.nextInt(7000) + "@gmail.com";
     String password = passwords[rand.nextInt(passwords.length)];
+    String addressField = "amman";
 
 
 	@BeforeTest
@@ -42,7 +45,7 @@ public class TestCases {
 		
 	}
 
-	@Test(priority = 1, enabled = false)
+	@Test(priority = 1, enabled = true)
 	public void homePageAccessability() throws InterruptedException {
 
 		Thread.sleep(2000);
@@ -67,8 +70,10 @@ public class TestCases {
 		}
 	}
 
-	@Test(priority = 2, enabled = false)
+	@Test(priority = 2, enabled = true)
 	public void ProductCategoryNavigation() throws InterruptedException {
+		
+		Thread.sleep(2000);
 
 		Actions actions = new Actions(driver);
 
@@ -111,8 +116,10 @@ public class TestCases {
 		Thread.sleep(1000);
 	}
 	
-	@Test(priority = 3, enabled = false)
+	@Test(priority = 3, enabled = true)
 	public void ProductSearchFunctionality() throws InterruptedException {
+		
+		Thread.sleep(2000);
 		
 		driver.findElement(By.name("q")).sendKeys("iphone 14 plus");
 		
@@ -122,13 +129,9 @@ public class TestCases {
 	
 	}
 	
-	@Test(priority = 4, enabled = false)
+	@Test(priority = 4, enabled = true)
 	public void languageSelection() throws InterruptedException {
 		
-        Thread.sleep(2000);
-		
-        driver.findElement(By.cssSelector("#vitals_popup > div > div > div.Vtl-Modal__ContentWrapper > div > div > div > div > div > button.Vtl-Button.Vtl-Button--large.Vtl-Button--isLightTheme.Vtl-Button--isGhostVariant.vtl-text-body-m.Vtl-Popup__SecondaryButton")).click();
-        
         Thread.sleep(2000);
 		
 		WebElement languageSwithcer = driver.findElement(By.xpath("//*[@id=\"localization_form_header_locale\"]/div/button"));
@@ -145,7 +148,54 @@ public class TestCases {
 	}
 	
 	@Test(priority = 5, enabled = true)
+	public void testSignup() throws InterruptedException {
+	    
+	    driver.get("https://smartbuy-me.com/ar/account/register");
+	    Thread.sleep(2000);
+
+	    JavascriptExecutor js = (JavascriptExecutor) driver;
+	    js.executeScript("window.scrollTo(0,150)");
+	    Thread.sleep(2000);
+
+	    System.out.println(" Signup email: " + email);
+	    System.out.println(" Password: " + password);
+
+	    driver.findElement(By.id("customer[first_name]")).sendKeys(firstName);
+	    driver.findElement(By.id("customer[last_name]")).sendKeys(lastName);
+	    driver.findElement(By.id("customer[email]")).sendKeys(email);
+	    driver.findElement(By.id("customer[password]")).sendKeys(password);
+
+	    driver.findElement(By.xpath("//button[@class='form__submit button button--primary button--full']")).click();
+
+	    driver.manage().addCookie(new org.openqa.selenium.Cookie("signup_email", email));
+	    driver.manage().addCookie(new org.openqa.selenium.Cookie("signup_password", password));
+	}
+	
+	@Test(priority = 6, enabled = true)
+	public void LoginPage() throws InterruptedException {
+	    Thread.sleep(2000);
+	    driver.get("https://smartbuy-me.com/ar/account/login");
+
+	    JavascriptExecutor js = (JavascriptExecutor) driver;
+	    js.executeScript("window.scrollTo(0,200)");
+	    Thread.sleep(2000);
+
+	    if (email != null && password != null) {
+	        driver.findElement(By.id("customer[email]")).sendKeys(email);
+	        driver.findElement(By.id("customer[password]")).sendKeys(password);
+	        Thread.sleep(2000);
+	        driver.findElement(By.className("Vtl-Button__Content")).click();
+	        Thread.sleep(1000);
+	        driver.findElement(By.cssSelector(".form__submit.button.button--primary.button--full")).click();
+	    } else {
+	        System.err.println("❌ Email or password is null. Make sure testSignup() ran first.");
+	    }
+	}
+	
+	
+	@Test(priority = 7, enabled = true)
     public void addRandomProductToCart() throws InterruptedException {
+		
         driver.get("https://smartbuy-me.com/");
 
         String[] sections = {"Featured Products", "Promotions", "New Arrivals", "Trending Now"};
@@ -192,8 +242,33 @@ public class TestCases {
         Thread.sleep(2000);
     }
 	
-	@Test(priority = 6, enabled = true)
-	public void removeFromCart() {
+	 @Test(priority = 8, enabled = true)
+	    public void UpdateToCart() throws InterruptedException {
+		 
+		 WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+
+		 WebElement cartIcon = wait.until(ExpectedConditions.elementToBeClickable(
+		    By.cssSelector("a[href='/cart']")  
+	     ));
+	 
+		 cartIcon.click();
+
+		 WebElement increaseButton = driver.findElement(By.xpath("//button[contains(@class,'quantity-selector__button') and @data-action='increase-quantity' and @data-line='1']"));
+		 increaseButton.click();
+
+		 wait.until(ExpectedConditions.invisibilityOfElementLocated(
+		    By.cssSelector("#mini-cart .mini-cart__item")));
+		 
+		 Thread.sleep(2000);
+		 
+		 cartIcon.click();
+	 }
+	
+	@Test(priority = 9, enabled = true)
+	public void removeFromCart() throws InterruptedException {
+		
+		 Thread.sleep(2000);
+		
 	    WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
 
 	    WebElement cartIcon = wait.until(ExpectedConditions.elementToBeClickable(
@@ -201,21 +276,58 @@ public class TestCases {
 	    ));
 	    cartIcon.click();
 
-	    WebElement removeButton = wait.until(ExpectedConditions.elementToBeClickable(
-	       By.xpath("//*[@id='mini-cart']//a[contains(@class,'mini-cart__quantity-remove')]")));
-	    removeButton.click();
+	    WebElement decreaseButton = wait.until(ExpectedConditions.elementToBeClickable(
+	        By.xpath("//button[contains(@class,'quantity-selector__button') and @data-action='decrease-quantity' and @data-line='1']")));
+	    decreaseButton.click();
 
 	    
 	    wait.until(ExpectedConditions.invisibilityOfElementLocated(
 	    	    By.cssSelector("#mini-cart .mini-cart__item")));
+	    
+	    Thread.sleep(2000);
+	    
+	    cartIcon.click();
 	}
 	
-	@Test(priority = 7, enabled = false)
+	@Test(priority = 10, enabled = true)
+	public void ShowCartPage() throws InterruptedException {
+	    
+	    Thread.sleep(2000);
+
+	    driver.findElement(By.xpath("(//span[@class='icon-state__primary'])[3]")).click();
+	    Thread.sleep(3000);
+
+	    driver.findElement(By.xpath("//a[normalize-space()='View cart'][1]")).click();
+	}
+	
+	@Test(priority = 11, enabled = true)
+    public void CheckOut() throws InterruptedException {
+		
+        driver.findElement(By.xpath("//button[@name='checkout']")).click();
+
+       
+        Thread.sleep(4000);
+        
+        driver.findElement(By.xpath("//input[@name='marketing_opt_in']")).click();
+        Thread.sleep(2000);
+        driver.findElement(By.xpath("//input[@placeholder='Address']")).sendKeys(addressField);
+        driver.findElement(By.xpath("//input[@placeholder='Apartment, suite, etc.']")).sendKeys("5");
+        driver.findElement(By.name("city")).sendKeys("Amman");
+        driver.findElement(By.name("postalCode")).sendKeys("11118");
+        driver.findElement(By.name("phone")).sendKeys("0785075401");
+        Thread.sleep(3000);
+        driver.findElement(By.name("shipping_methods")).click();
+        driver.findElement(By.id("checkout-pay-button")).click();
+        
+        Thread.sleep(2000);
+        
+        driver.get("https://smartbuy-me.com/");
+	}
+	
+	@Test(priority = 12, enabled = true)
 	public void productDetailAccuracy() throws InterruptedException {
 		
         Thread.sleep(2000);
-		
-        driver.findElement(By.xpath("//*[@id=\"vitals_popup\"]/div/div/div[2]/div/div/div/div/div/button[2]")).click();
 		
 		WebElement firstProduct = driver.findElement(By.xpath("//*[@id=\"shopify-section-template--23554639757622__featured_collection_AyKFpr\"]/section/div[2]/div/div/div/div/div/div[5]/div[2]/div/a"));
         String productNameOnGrid = firstProduct.getText().trim();
@@ -238,51 +350,54 @@ public class TestCases {
 		 
 	}
 	
-	@Test(priority = 8, enabled = false)
-	public void testSignup() throws InterruptedException {
-	    
-	    driver.get("https://smartbuy-me.com/ar/account/register");
-	    Thread.sleep(5000);
+	 @Test(priority = 13, enabled = true)
+	 public void accessPromotionsPage() throws InterruptedException {
+		 
+		    Thread.sleep(2000);
+	       
+			WebElement promotionsLink = driver.findElement(By.cssSelector("a.nav-bar__link.link[href='/collections/promotions']"));
+			promotionsLink.click();
 
-	    JavascriptExecutor js = (JavascriptExecutor) driver;
-	    js.executeScript("window.scrollTo(0,150)");
-	    Thread.sleep(2000);
+			JavascriptExecutor js = (JavascriptExecutor) driver;
+			// Scroll down gradually to bottom
+			long height = (long) js.executeScript("return document.body.scrollHeight");
+			for (int i = 0; i < height; i += 100) {
+				js.executeScript("window.scrollBy(0, 100);");
+				Thread.sleep(100);
+			}
 
-	    System.out.println(" Signup email: " + email);
-	    System.out.println(" Password: " + password);
+			// Wait 2 seconds at bottom
+			Thread.sleep(1000);
 
-	    driver.findElement(By.id("customer[first_name]")).sendKeys(firstName);
-	    driver.findElement(By.id("customer[last_name]")).sendKeys(lastName);
-	    driver.findElement(By.id("customer[email]")).sendKeys(email);
-	    driver.findElement(By.id("customer[password]")).sendKeys(password);
+			// Scroll up gradually to top
+			for (int i = 0; i < height; i += 100) {
+				js.executeScript("window.scrollBy(0, -100);");
+				Thread.sleep(100);
+			}
+	 }
+	 
+	 @Test(priority = 14, enabled = true)
+	 public void responsiveDesignOnMobileDevices() throws InterruptedException {
+		 
+		    Thread.sleep(2000);
 
-	    driver.findElement(By.xpath("//button[@class='form__submit button button--primary button--full']")).click();
+			driver.get("https://smartbuy-me.com");
 
-	    driver.manage().addCookie(new org.openqa.selenium.Cookie("signup_email", email));
-	    driver.manage().addCookie(new org.openqa.selenium.Cookie("signup_password", password));
-	}
-	
-	@Test(priority = 9, enabled = false)
-	public void LoginPage() throws InterruptedException {
-	    Thread.sleep(2000);
-	    driver.get("https://smartbuy-me.com/ar/account/login");
+		    driver.manage().window().setSize(new Dimension(375, 812));
+		    Thread.sleep(2000);
 
-	    JavascriptExecutor js = (JavascriptExecutor) driver;
-	    js.executeScript("window.scrollTo(0,200)");
-	    Thread.sleep(2000);
+		    WebElement menuIcon = driver.findElement(By.xpath("//button[contains(@class, 'header__mobile-nav-toggle') and contains(@class, 'icon-state') and contains(@class, 'touch-area')]"));
+		    Thread.sleep(3000);
+		    Assert.assertTrue(menuIcon.isDisplayed(), "Mobile menu icon is not visible!");
 
-	    if (email != null && password != null) {
-	        driver.findElement(By.id("customer[email]")).sendKeys(email);
-	        driver.findElement(By.id("customer[password]")).sendKeys(password);
-	        Thread.sleep(2000);
-	        driver.findElement(By.className("Vtl-Button__Content")).click();
-	        Thread.sleep(1000);
-	        driver.findElement(By.cssSelector(".form__submit.button.button--primary.button--full")).click();
-	    } else {
-	        System.err.println("❌ Email or password is null. Make sure testSignup() ran first.");
+		    menuIcon.click();
+		    Thread.sleep(1500);
+
+		    WebElement mobileMenu = driver.findElement(By.id("mobile-menu"));
+		    Assert.assertTrue(mobileMenu.isDisplayed(), "Menu drawer is not visible!");
 	    }
-	}
-
+	 
+	 
 	@AfterTest
 	public void tearDown() {
 
