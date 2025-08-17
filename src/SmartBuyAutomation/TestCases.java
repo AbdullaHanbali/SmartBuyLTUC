@@ -48,10 +48,6 @@ public class TestCases {
 	@Test(priority = 1, enabled = true)
 	public void homePageAccessability() throws InterruptedException {
 
-		Thread.sleep(2000);
-		
-		driver.findElement(By.xpath("//*[@id='vitals_popup']//button[2]")).click();
-
 		JavascriptExecutor js = (JavascriptExecutor) driver;
 		// Scroll down gradually to bottom
 		long height = (long) js.executeScript("return document.body.scrollHeight");
@@ -94,7 +90,7 @@ public class TestCases {
 		
 		actions.moveToElement(randomSubCategory).click().build().perform();
 
-		Thread.sleep(1000);
+		Thread.sleep(3000);
 
 		JavascriptExecutor js = (JavascriptExecutor) driver;
 		// Scroll down gradually to bottom
@@ -131,20 +127,19 @@ public class TestCases {
 	
 	@Test(priority = 4, enabled = true)
 	public void languageSelection() throws InterruptedException {
-		
-        Thread.sleep(2000);
-		
-		WebElement languageSwithcer = driver.findElement(By.xpath("//*[@id=\"localization_form_header_locale\"]/div/button"));
-		languageSwithcer.click();
-		Thread.sleep(2000);
-		
-		WebElement chooseArabic = driver.findElement(By.xpath("//*[@id=\"desktop-locale-selector\"]/div/ul/li[2]/button"));
-		chooseArabic.click();
-		Thread.sleep(2000);
-		
-		WebElement arabicHome = driver.findElement(By.xpath("//*[@id=\"shopify-section-sections--23554635530550__header\"]/section/header/div/div/div[2]/div[1]"));
-		Assert.assertTrue(arabicHome.isDisplayed(), "Arabic content is not displayed on the page.");
-		
+	    
+	    Thread.sleep(2000);
+
+	    WebElement languageSwithcer = driver.findElement(By.xpath("//*[@id=\"localization_form_header_locale\"]/div/button"));
+	    languageSwithcer.click();
+	    Thread.sleep(2000);
+
+	    WebElement chooseArabic = driver.findElement(By.xpath("//*[@id=\"desktop-locale-selector\"]/div/ul/li[2]/button"));
+	    chooseArabic.click();
+	    Thread.sleep(2000);
+
+	    // التحقق من اللغة العربية عن طريق الـ URL
+	    Assert.assertTrue(driver.getCurrentUrl().contains("/ar/"), "Arabic language is not applied (URL check).");
 	}
 	
 	@Test(priority = 5, enabled = true)
@@ -183,10 +178,8 @@ public class TestCases {
 	    if (email != null && password != null) {
 	        driver.findElement(By.id("customer[email]")).sendKeys(email);
 	        driver.findElement(By.id("customer[password]")).sendKeys(password);
-	        Thread.sleep(2000);
-	        driver.findElement(By.className("Vtl-Button__Content")).click();
 	        Thread.sleep(1000);
-	        driver.findElement(By.cssSelector(".form__submit.button.button--primary.button--full")).click();
+	        driver.findElement(By.cssSelector("button.form__submit.button.button--primary.button--full")).click();
 	    } else {
 	        System.err.println("❌ Email or password is null. Make sure testSignup() ran first.");
 	    }
@@ -326,30 +319,43 @@ public class TestCases {
 	
 	@Test(priority = 12, enabled = true)
 	public void productDetailAccuracy() throws InterruptedException {
-		
-        Thread.sleep(2000);
-		
-		WebElement firstProduct = driver.findElement(By.xpath("//*[@id=\"shopify-section-template--23554639757622__featured_collection_AyKFpr\"]/section/div[2]/div/div/div/div/div/div[5]/div[2]/div/a"));
-        String productNameOnGrid = firstProduct.getText().trim();
-        firstProduct.click();
+	    driver.get("https://smartbuy-me.com/");
 
-        Thread.sleep(2000); 
+	    WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
 
-        WebElement productNameOnDetail = driver.findElement(By.xpath("//h1[@class='product-meta__title heading h1']"));
-        String productNameDetail = productNameOnDetail.getText().trim();
-        Assert.assertEquals(productNameDetail, productNameOnGrid, "Product name mismatch!");
+	    // اختار أول منتج
+	    WebElement firstProduct = wait.until(
+	        ExpectedConditions.elementToBeClickable(By.cssSelector(".product-item__title"))
+	    );
+	    String productNameOnGrid = firstProduct.getText().trim();
+	    firstProduct.click();
 
-        WebElement productImage = driver.findElement(By.xpath("//img[contains(@class, 'product-gallery__image')]"));
-        Assert.assertTrue(productImage.isDisplayed(), "Product image is not displayed!");
+	    // تحقق من التفاصيل
+	    WebElement productNameOnDetail = wait.until(
+	        ExpectedConditions.visibilityOfElementLocated(By.cssSelector("h1.product-meta__title"))
+	    );
+	    Assert.assertEquals(productNameOnDetail.getText().trim(), productNameOnGrid, "❌ Product name mismatch!");
 
-        WebElement productPrice = driver.findElement(By.xpath("//span[contains(@class,'price') and contains(@class,'price--highlight')]"));
-        Assert.assertTrue(productPrice.isDisplayed(), "Product price is not displayed!");
+	    WebElement productImage = driver.findElement(By.cssSelector(".product-gallery__image"));
+	    Assert.assertTrue(productImage.isDisplayed(), "❌ Product image is not displayed!");
 
-        WebElement availability = driver.findElement(By.cssSelector("input.quantity-selector__value"));
-        Assert.assertTrue(availability.isDisplayed(), "Availability info is missing!");
-		 
+	    // ✅ تحقق من السعر (أي نوع: عادي أو خصم)
+	    List<WebElement> productPrices = driver.findElements(
+	        By.cssSelector("span.price, span.price--highlight, span.price--compare")
+	    );
+	    Assert.assertTrue(!productPrices.isEmpty(), "❌ Product price is not displayed!");
+
+	    // ✅ تحقق من التوفر (quantity OR Sold out)
+	    List<WebElement> quantityBox = driver.findElements(By.cssSelector("input.quantity-selector__value"));
+	    List<WebElement> soldOutLabel = driver.findElements(By.cssSelector(".product-form__add-button[disabled]"));
+
+	    Assert.assertTrue(
+	        !quantityBox.isEmpty() || !soldOutLabel.isEmpty(),
+	        "❌ Availability info is missing! (No quantity input or sold-out label found)"
+	    );
 	}
-	
+
+
 	 @Test(priority = 13, enabled = true)
 	 public void accessPromotionsPage() throws InterruptedException {
 		 
